@@ -1,0 +1,37 @@
+//@version=6
+indicator("Daily Bullish/Bearish Counter with Candle Body Sum", overlay=false)
+
+// Inputs for the target time
+targetHour = input.int(9, title="Target Hour (24h format)", minval=0, maxval=23)
+targetMinute = input.int(30, title="Target Minute", minval=0, maxval=59)
+
+// Variables to store counts and body sums
+var int bullishCount = 0
+var int bearishCount = 0
+var float bullishBodySum = 0.0
+var float bearishBodySum = 0.0
+
+// Calculate the body size (absolute value of close - open)
+bodySize = math.abs(close - open)
+
+// Check if the current bar matches the target time
+isTargetTime = (hour == targetHour and minute == targetMinute)
+
+// Update counts and body sums at the specified time
+if isTargetTime
+    if close > open
+        bullishCount += 1
+        bullishBodySum += bodySize
+    else if close < open
+        bearishCount += 1
+        bearishBodySum += bodySize
+
+// Display the counts and body sums
+label.new(bar_index, high, "Bullish: " + str.tostring(bullishCount) + "\nBody Sum: " + str.tostring(bullishBodySum), style=label.style_circle, color=color.new(color.green, 80))
+label.new(bar_index, low, "Bearish: " + str.tostring(bearishCount) + "\nBody Sum: " + str.tostring(bearishBodySum), style=label.style_circle, color=color.new(color.red, 80))
+
+// Plot the counts and body sums
+plot(bullishCount, title="Bullish Count", color=color.green, linewidth=2)
+plot(bearishCount, title="Bearish Count", color=color.red, linewidth=2)
+plot(bullishBodySum, title="Bullish Body Sum", color=color.new(color.green, 50), linewidth=2, style=plot.style_stepline)
+plot(bearishBodySum, title="Bearish Body Sum", color=color.new(color.red, 50), linewidth=2, style=plot.style_stepline)

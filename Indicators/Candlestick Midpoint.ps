@@ -1,0 +1,8 @@
+//@version=6
+indicator("Candlestick Midpoint", overlay=true)
+
+// Calculate the midpoint of the candlestick
+midpoint = (open + close) / 2
+
+// Plot the midpoint as a horizontal line on the chart
+plot(midpoint, color=color.orange, linewidth=2, title="Candlestick Midpoint")

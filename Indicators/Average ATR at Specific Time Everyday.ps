@@ -1,0 +1,29 @@
+//@version=6
+indicator("Average ATR at Specific Time Every Day", overlay=true)
+
+// Input for time of trade
+var hour_input = input.int(17, title="Hour of Trade", minval=0, maxval=23)  // Hour input
+var minute_input = input.int(0, title="Minute of Trade", maxval=59)       // Minute input
+
+// Calculate the ATR
+atrLength = 1
+atrValue = ta.atr(atrLength)
+
+// Collect ATR values at the specific time each day
+var float sumAtr = 0
+var int count = 0
+
+
+// Time condition to check for the specified hour and minute
+timeCondition = (hour == hour_input and minute == minute_input)
+
+
+if (timeCondition)
+    sumAtr := sumAtr + atrValue
+    count := count + 1
+
+// Calculate the average ATR after a few days of collection
+avgAtr = count > 0 ? sumAtr / count : na
+
+// Plot the average ATR on the chart
+plot(avgAtr, color=color.blue, linewidth=2, title="Average ATR at 15:00")

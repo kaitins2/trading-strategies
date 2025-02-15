@@ -1,0 +1,17 @@
+//@version=6
+indicator("Candlestick Percentage Change", overlay=false)
+
+// Calculate percentage change for each candlestick
+percentage_change = ((close - open) / open) * 100
+
+// Create color coding for dips and increases
+color_candle = percentage_change >= 0 ? color.green : color.red
+
+// Plot the percentage change as a histogram
+hline(0, "Baseline", color=color.gray, linestyle=hline.style_dotted)
+plot(percentage_change, style=plot.style_histogram, color=color_candle, linewidth=2, title="Candlestick % Change")
+
+// Add optional labels for significant changes
+significant_change_threshold = input.float(2.0, "Significant Change Threshold (%)")
+if math.abs(percentage_change) >= significant_change_threshold
+    label.new(bar_index, percentage_change, str.tostring(percentage_change, "#.##") + "%", color=color.new(color_candle, 80), style=label.style_circle, textcolor=color.white)

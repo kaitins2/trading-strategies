@@ -1,0 +1,32 @@
+//@version=6
+indicator("Candlestick Midpoint with Total Reach Ratio", overlay=true)
+
+// Calculate the midpoint of the previous candlestick
+midpoint_prev = (open[1] + close[1]) / 2
+
+// Check if the current candlestick reaches the midpoint of the previous candlestick
+reaches_midpoint = low <= midpoint_prev and high >= midpoint_prev
+
+// Initialize a persistent variable to count total matches
+var int total_count = 0
+
+// Update the total count if the midpoint is reached
+if reaches_midpoint
+    total_count := total_count + 1
+
+// Calculate the total number of candlesticks processed so far
+total_candlesticks = bar_index + 1
+
+// Plot the midpoint of the previous candlestick as a horizontal line
+plot(midpoint_prev, color=color.orange, linewidth=2, title="Previous Candlestick Midpoint")
+
+// Add markers or color-code based on whether the midpoint is reached
+bgcolor(reaches_midpoint ? color.new(color.green, 80) : na, title="Midpoint Reached Background")
+plotshape(reaches_midpoint, style=shape.labelup, location=location.abovebar, color=color.green, title="Reached Midpoint Marker")
+
+// Display the total count and ratio as a label on the chart
+label.new(bar_index, high, 
+          text="Reached: " + str.tostring(total_count) + " / " + str.tostring(total_candlesticks), 
+          style=label.style_circle, 
+          color=color.new(color.blue, 80), 
+          textcolor=color.white)
