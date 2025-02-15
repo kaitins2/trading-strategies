@@ -1,0 +1,132 @@
+//+------------------------------------------------------------------+
+//|                                              Supertrend_EMA_EA.mq4|
+//|                                                                  |
+//|                Copyright 2023, MetaQuotes Software Corp.        |
+//|                                              https://www.mql5.com|
+//+------------------------------------------------------------------+
+#property copyright "Copyright 2023, MetaQuotes Software Corp."
+#property link      "https://www.mql5.com"
+#property version   "1.00"
+
+// Input parameters
+extern double LotSize = 0.1;
+extern int    EMA_Period = 14;
+extern int    Supertrend_ATR_Period = 10;
+extern double Supertrend_Multiplier = 3;
+extern string StartTime = "00:00";
+extern string EndTime = "23:59";
+
+// Global variables
+double EMA[];
+double Supertrend[];
+int    TimeFilterStart;
+int    TimeFilterEnd;
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int init()
+  {
+   // Initialize the time filter
+   TimeFilterStart = StrToTime(StartTime);
+   TimeFilterEnd   = StrToTime(EndTime);
+   
+   // Initialize EMA and Supertrend indicators
+   int EMA_Handle = iMA(NULL, 0, EMA_Period, 0, MODE_EMA, PRICE_CLOSE, 0);
+   int Supertrend_Handle = iCustom(NULL, 0, "SuperTrend", Supertrend_ATR_Period, Supertrend_Multiplier, 1);
+
+   // Set array size
+   ArrayResize(EMA, Bars);
+   ArrayResize(Supertrend, Bars);
+
+   // Copy data to arrays
+   CopyClose(Symbol(), 0, 0, Bars, EMA);
+   CopyBuffer(Supertrend_Handle, 0, 0, Bars, Supertrend);
+
+   return(0);
+  }
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+int deinit()
+  {
+   return(0);
+  }
+
+//+------------------------------------------------------------------+
+//| Expert start function                                            |
+//+------------------------------------------------------------------+
+int start()
+  {
+   int ticket;
+
+   // Update arrays
+   CopyClose(Symbol(), 0, 0, Bars, EMA);
+   CopyBuffer(iCustom(NULL, 0, "SuperTrend", Supertrend_ATR_Period, Supertrend_Multiplier, 1), 0, 0, Bars, Supertrend);
+
+   // Calculate EMA
+   for (int i = 1; i < Bars; i++) {
+      EMA[i] = EMA[i - 1] + (Close[i] - EMA[i - 1]) * 2.0 / (EMA_Period + 1);
+   }
+
+   // Check if the current time is within the time filter
+   datetime currTime = TimeCurrent();
+   if (TimeDayOfWeek(currTime) == 0 || TimeDayOfWeek(currTime) == 6) return (0); // No trading on weekends
+   if (TimeHour(currTime) * 3600 + TimeMinute(currTime) * 60 < TimeFilterStart) return (0);
+   if (TimeHour(currTime) * 3600 + TimeMinute(currTime) * 60 > TimeFilterEnd) return (0);
+
+   // Check for buy conditions
+   if (Close[1] > EMA[1] && Supertrend[1] < Supertrend[2])
+     {
+      if (OrdersTotal() > 0) CloseAllOrders();
+
+      ticket = OrderSend(Symbol(), OP_BUY, LotSize, Ask, 3, 0, 0,
+      "Buy Order", 0, 0, Green);
+      if (ticket < 0)
+        {
+         Print("Buy Order Error: ", GetLastError());
+        }
+     }
+
+   // Check for sell conditions
+   if (Close[1] < EMA[1] && Supertrend[1] > Supertrend[2])
+     {
+      if (OrdersTotal() > 0) CloseAllOrders();
+
+      ticket = OrderSend(Symbol(), OP_SELL, LotSize, Bid, 3, 0, 0,
+      "Sell Order", 0, 0, Red);
+      if (ticket < 0)
+        {
+         Print("Sell Order Error: ", GetLastError());
+        }
+     }
+
+   return (0);
+  }
+
+//+------------------------------------------------------------------+
+//| Close all open orders                                            |
+//+------------------------------------------------------------------+
+void CloseAllOrders()
+  {
+   for (int i = OrdersTotal() - 1; i >= 0; i--)
+     {
+      if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+        {
+         if (OrderSymbol() == Symbol())
+           {
+            if (OrderType() == OP_BUY)
+              {
+               OrderClose(OrderTicket(), OrderLots(), Bid, 3, Green);
+              }
+            else if (OrderType() == OP_SELL)
+              {
+               OrderClose(OrderTicket(), OrderLots(), Ask, 3, Red);
+              }
+           }
+        }
+     }
+  }
+//+------------------------------------------------------------------+
+
