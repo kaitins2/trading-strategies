@@ -1,0 +1,29 @@
+//@version=6
+strategy("Time-Based Candlestick Strategy", overlay=true, process_orders_on_close=false)
+
+// User-defined time for strategy execution
+var hour_input = input.int(10, title="Hour of Trade", minval=0, maxval=23)  // Hour input
+var minute_input = input.int(0, title="Minute of Trade", maxval=59)  // Minute input
+
+// Calculate current time
+currentHour = hour(time)
+currentMinute = minute(time)
+
+// Check if the current time matches the chosen time
+timeCondition = (currentHour == hour_input and currentMinute == minute_input)
+
+// Check if the previous candlestick is bullish or bearish
+previousBullish = close[1] > open[1]
+previousBearish = close[1] < open[1]
+
+// Execute trade at the current candle's open
+if (timeCondition)
+    if (previousBullish)
+        strategy.entry("Buy", strategy.long, limit=open)
+    else if (previousBearish)
+        strategy.entry("Sell", strategy.short, limit=open)
+
+// Exit when the candlestick closes
+if (strategy.position_size != 0)
+    strategy.close("Buy")
+    strategy.close("Sell")

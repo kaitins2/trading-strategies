@@ -1,0 +1,24 @@
+//@version=6
+strategy("Daily Sell Strategy", overlay=true)
+
+// Input for time of trade
+var hour_input = input.int(15, title="Hour of Trade", minval=0, maxval=23)  // Hour input
+var minute_input = input.int(0, title="Minute of Trade", minval=0, maxval=59)  // Minute input
+
+// Input for take-profit and stop-loss in ticks
+takeProfitTicks = input.int(20, title="Take Profit (in ticks)")
+stopLossTicks = input.int(10, title="Stop Loss (in ticks)")
+
+// Time condition
+currentHour = hour(time)
+currentMinute = minute(time)
+timeCondition = (currentHour == hour_input and currentMinute == minute_input)
+
+// Execute trade if the time is right
+if (timeCondition)
+    strategy.entry("Sell", strategy.short)
+
+// Exit conditions directly in the strategy.exit call
+strategy.exit("Exit Position", from_entry="Sell", 
+              limit=strategy.position_avg_price - takeProfitTicks * syminfo.mintick, 
+              stop=strategy.position_avg_price + stopLossTicks * syminfo.mintick)

@@ -1,0 +1,26 @@
+//@version=6
+strategy("Daily Buy Strategy", overlay=true, process_orders_on_close=false)
+
+// Input for time of trade
+var hour_input = input.int(17, title="Hour of Trade", minval=0, maxval=23)  // Hour input
+var minute_input = input.int(0, title="Minute of Trade", maxval=59)       // Minute input
+
+// Input for take-profit and stop-loss in ticks
+takeProfitTicks = input.int(20, title="Take Profit (in ticks)")
+stopLossTicks = input.int(10, title="Stop Loss (in ticks)")
+
+// Calculate price levels for take-profit and stop-loss based on previous close
+prevClose = close[1]  // Access previous close price
+takeProfitPrice = prevClose + takeProfitTicks * syminfo.mintick
+stopLossPrice = prevClose - stopLossTicks * syminfo.mintick
+
+// Time condition to check for the specified hour and minute
+timeCondition = (hour == hour_input and minute == minute_input)
+
+// Execute trade at the target time
+if (timeCondition)
+    strategy.entry("Buy", strategy.long)
+
+// Set exit conditions (take-profit and stop-loss)
+strategy.exit("Take Profit", from_entry="Buy", limit=takeProfitPrice)
+strategy.exit("Stop Loss", from_entry="Buy", stop=stopLossPrice)

@@ -1,0 +1,28 @@
+//@version=6
+strategy("Midpoint Trading Strategy", overlay=true, shorttitle="Midpoint Strategy")
+
+// Calculate the midpoint of the previous candlestick
+midpoint_prev = (open[1] + close[1]) / 2
+
+// Track if a trade is open
+var bool in_trade = false
+
+// Entry condition: New bar, enter trade
+if not in_trade
+    if midpoint_prev > open
+        strategy.entry("Buy", strategy.long, comment="Buy Entry")
+        // Set take profit for long position
+        strategy.exit("Take Profit", "Buy", profit=midpoint_prev)
+    else if midpoint_prev < open
+        strategy.entry("Sell", strategy.short, comment="Sell Entry")
+        // Set take profit for short position
+        strategy.exit("Take Profit", "Sell", profit=midpoint_prev)
+    in_trade := true
+
+// Exit condition: Close trade at bar close if not already closed by take profit
+if in_trade and barstate.isconfirmed
+    strategy.close_all(comment="Bar Close")
+    in_trade := false
+
+// Plot the midpoint for reference
+plot(midpoint_prev, color=color.orange, linewidth=2, title="Previous Candlestick Midpoint")
